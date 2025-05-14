@@ -4,6 +4,7 @@ import aiohttp
 import random
 import logging
 import asyncio
+import urllib.parse
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.ext import (
     Application,
@@ -19,7 +20,7 @@ logger = logging.getLogger(__name__)
 
 # Assuming ADMIN_IDS and API_KEY are defined
 ADMIN_IDS = [int(x) for x in os.getenv("ADMIN_IDS", "").split(",") if x]
-API_KEY = os.getenv("GETBIBLE_API_KEY", "")  # Add API key in Render environment variables if required
+API_KEY = os.getenv("GETBIBLE_API_KEY", "")
 
 # List of verse references for random selection
 VERSE_REFERENCES = [
@@ -34,25 +35,43 @@ PRAYERS = [
     "Heavenly Father, protect us and grant us your grace. Amen."
 ]
 
-# Fallback static verse for API failure
-FALLBACK_VERSE = {
-    "reference": "John 3:16",
-    "english": "For God so loved the world, that he gave his only begotten Son, that whosoever believeth in him should not perish, but have everlasting life.",
-    "telugu": "దేవుడు లోకమును ఎంతగా ప్రేమించెనంటే, తన ఏకైక కుమారునిగా జన్మించినవానిని అర్పించెను, ఆయనయందు విశ్వాసముంచు ప్రతివాడును నశించక, నిత్యజీవము పొందునట్లు."
-}
+# Expanded fallback verses for API failure
+FALLBACK_VERSES = [
+    {
+        "reference": "John 3:16",
+        "english": "For God so loved the world, that he gave his only begotten Son, that whosoever believeth in him should not perish, but have everlasting life.",
+        "telugu": "దేవుడు లోకమును ఎంతగా ప్రేమించెనంటే, తన ఏకైక కుమారునిగా జన్మించినవానిని అర్పించెను, ఆయనయందు విశ్వాసముంచు ప్రతివాడును నశించక, నిత్యజీవము పొందునట్లు."
+    },
+    {
+        "reference": "Psalm 23:1",
+        "english": "The Lord is my shepherd; I shall not want.",
+        "telugu": "యెహోవా నా కాపరి, నాకు లేమి ఉండదు."
+    },
+    {
+        "reference": "Philippians 4:13",
+        "english": "I can do all things through Christ which strengtheneth me.",
+        "telugu": "నన్ను బలపరిచే క్రీస్తు ద్వారా నేను సమస్తమూ చేయగలను."
+    }
+]
 
 async def fetch_verse(translation: str, reference: str) -> dict:
-    url = f"https://getbible.net/v2/{translation}/{reference}.json"
+    encoded_reference = urllib.parse.quote(reference)
+    url = f"https://getbible.net/v2/{translation}/{encoded_reference}.json"
     headers = {
         "User-Agent": "ChristianCommunityBot/1.0 (https://github.com/<your-repo>)",
     }
     if API_KEY:
-        headers["Authorization"] = f"Bearer {API_KEY}"  # Add API key if required
+        headers["Authorization"] = f"Bearer {API_KEY}"
     try:
         async with aiohttp.ClientSession() as session:
             async with session.get(url, headers=headers, timeout=10) as response:
                 if response.status == 200:
-                    return await response.json()
+                    if response.content_type == "application/json":
+                        return await response.json()
+                    else:
+                        response_text = await response.text()
+                        logger.error(f"Unexpected mimetype {response.content_type} from {url}. Response: {response_text[:500]}")
+                        return None
                 else:
                     logger.error(f"Failed to fetch verse from {url}: Status {response.status}")
                     return None
@@ -80,7 +99,7 @@ async def verse(update: Update, context: ContextTypes.DEFAULT_TYPE):
     verse_text = ""
     try:
         english_verse = await fetch_verse("kjv", reference)
-        await asyncio.sleep(1)  # Add delay to avoid rate limiting
+        await asyncio.sleep(1)  # Delay to avoid rate limiting
         telugu_verse = await fetch_verse("tel-irv", reference)
         if english_verse and telugu_verse:
             verse_text = (
@@ -89,18 +108,20 @@ async def verse(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 f"🇮🇳 *Telugu (IRV)*: {telugu_verse['text']}"
             )
         else:
-            logger.warning(f"API failed for {reference}, using fallback verse")
+            fallback_verse = random.choice(FALLBACK_VERSES)
+            logger.warning(f"API failed for {reference}, using fallback verse {fallback_verse['reference']}")
             verse_text = (
-                f"📖 *Daily Verse: {FALLBACK_VERSE['reference']}* (API unavailable, using fallback)\n\n"
-                f"🇬🇧 *English (KJV)*: {FALLBACK_VERSE['english']}\n\n"
-                f"🇮🇳 *Telugu (IRV)*: {FALLBACK_VERSE['telugu']}"
+                f"📖 *Daily Verse: {fallback_verse['reference']}* (API unavailable, using fallback)\n\n"
+                f"🇬🇧 *English (KJV)*: {fallback_verse['english']}\n\n"
+                f"🇮🇳 *Telugu (IRV)*: {fallback_verse['telugu']}"
             )
     except Exception as e:
+        fallback_verse = random.choice(FALLBACK_VERSES)
         logger.error(f"Error in verse function: {str(e)}")
         verse_text = (
-            f"📖 *Daily Verse: {FALLBACK_VERSE['reference']}* (Error occurred, using fallback)\n\n"
-            f"🇬🇧 *English (KJV)*: {FALLBACK_VERSE['english']}\n\n"
-            f"🇮🇳 *Telugu (IRV)*: {FALLBACK_VERSE['telugu']}"
+            f"📖 *Daily Verse: {fallback_verse['reference']}* (Error occurred, using fallback)\n\n"
+            f"🇬🇧 *English (KJV)*: {fallback_verse['english']}\n\n"
+            f"🇮🇳 *Telugu (IRV)*: {fallback_verse['telugu']}"
         )
 
     try:
@@ -110,8 +131,10 @@ async def verse(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await update.callback_query.message.reply_text(verse_text, parse_mode="Markdown")
         else:
             logger.error("No message or callback query found in update")
+            raise ValueError("No valid message or callback query")
     except Exception as e:
         logger.error(f"Error sending verse message: {str(e)}")
+        raise  # Re-raise to capture in webhook logs
 
 async def prayer(update: Update, context: ContextTypes.DEFAULT_TYPE):
     prayer_text = random.choice(PRAYERS)
