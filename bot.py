@@ -40,6 +40,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
     add_user(user_id)
     keyboard = [[InlineKeyboardButton("Support Us", url=AFFILIATE_LINK)]]
+    reply_markup = InlineKeyboardMarkup(keyboard)
     keyboard = [[InlineKeyboardButton("Our Website", url=WEBSITE_LINK)]]
     reply_markup = InlineKeyboardMarkup(keyboard)
     await update.message.reply_text(
