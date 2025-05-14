@@ -110,6 +110,7 @@ flask_app = Flask(__name__)
 @flask_app.route("/webhook", methods=["POST"])
 async def webhook():
     app = await main()
+    await app.initialize()  # Initialize the Application
     update = Update.de_json(request.get_json(force=True), app.bot)
     await app.process_update(update)
     return "OK", 200
