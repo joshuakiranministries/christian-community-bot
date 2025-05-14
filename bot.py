@@ -19,9 +19,9 @@ from telegram.error import RetryAfter, TimedOut
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# Assuming ADMIN_IDS and API_KEY are defined
+# Environment variables
 ADMIN_IDS = [int(x) for x in os.getenv("ADMIN_IDS", "").split(",") if x]
-API_KEY = os.getenv("GETBIBLE_API_KEY", "")
+BIBLE_API_KEY = os.getenv("BIBLE_API_KEY", "")
 
 # List of verse references for random selection
 VERSE_REFERENCES = [
@@ -51,7 +51,7 @@ FALLBACK_VERSES = [
     {
         "reference": "Philippians 4:13",
         "english": "I can do all things through Christ which strengtheneth me.",
-        "telugu": "నన్ను బలపరిచే క్రీస్తు ద్వారా నేను సమస్తమూ చేయగలను."
+        "telugu": "నన్ను బలపరిచే క్రీస్తు ద్వారా నేను సమస్తమವు చేయగలను."
     },
     {
         "reference": "Romans 8:28",
@@ -65,21 +65,43 @@ FALLBACK_VERSES = [
     }
 ]
 
+# Convert verse reference to api.bible format (e.g., "John 3:16" -> "JHN.3.16")
+def format_verse_reference(reference: str) -> str:
+    book, chapter_verse = reference.rsplit(" ", 1)
+    chapter, verse = chapter_verse.split(":")
+    book_abbr = {
+        "John": "JHN",
+        "Psalm": "PSA",
+        "Romans": "ROM",
+        "Philippians": "PHP",
+        "Jeremiah": "JER",
+        "Proverbs": "PRO",
+        "Matthew": "MAT",
+        "Isaiah": "ISA",
+        "1 Corinthians": "1CO",
+        "Ephesians": "EPH"
+    }.get(book, book.upper()[:3])
+    return f"{book_abbr}.{chapter}.{verse}"
+
 async def fetch_verse(translation: str, reference: str) -> dict:
-    encoded_reference = urllib.parse.quote(reference)
-    url = f"https://getbible.net/v2/{translation}/{encoded_reference}.json"
+    bible_id = {
+        "kjv": "de4e12af7f28f599-01",  # KJV
+        "tel-irv": "a156e704dc937475-01"  # Telugu IRV
+    }.get(translation)
+    verse_id = format_verse_reference(reference)
+    url = f"https://api.bible/v1/bibles/{bible_id}/verses/{verse_id}"
     headers = {
+        "api-key": BIBLE_API_KEY,
         "User-Agent": "ChristianCommunityBot/1.0 (https://github.com/<your-repo>)",
     }
-    if API_KEY:
-        headers["Authorization"] = f"Bearer {API_KEY}"
     try:
         async with aiohttp.ClientSession() as session:
             async with session.get(url, headers=headers, timeout=10) as response:
                 logger.info(f"API request to {url}: Status {response.status}, Headers {response.headers}")
                 if response.status == 200:
                     if response.content_type == "application/json":
-                        return await response.json()
+                        data = await response.json()
+                        return {"text": data["data"]["content"]}
                     else:
                         response_text = await response.text()
                         logger.error(f"Unexpected mimetype {response.content_type} from {url}. Response: {response_text[:500]}")
@@ -102,6 +124,7 @@ async def send_message_with_retry(update: Update, text: str, parse_mode: str = N
             else:
                 logger.error("No message or callback query found in update")
                 raise ValueError("No valid message or callback query")
+            logger.info(f"Message sent successfully: {text[:50]}...")
             return
         except RetryAfter as e:
             logger.warning(f"RetryAfter error: {e}. Waiting {e.retry_after} seconds...")
