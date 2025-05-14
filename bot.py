@@ -13,7 +13,7 @@ from telegram.ext import (
     ContextTypes,
     filters,
 )
-from telegram.error import RetryAfter, TimedOut
+from telegram.error import RetryAfter, TimedOut, InvalidCallbackQuery
 
 # Set up logging
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
@@ -25,7 +25,7 @@ BIBLE_API_KEY = os.getenv("BIBLE_API_KEY", "")
 
 # Validate BIBLE_API_KEY
 if not BIBLE_API_KEY:
-    logger.error("BIBLE_API_KEY is not set in environment variables")
+    logger.error("BIBLE_API_KEY is not set in environment variables. Falling back to local verses.")
 
 # List of verse references for random selection
 VERSE_REFERENCES = [
@@ -33,14 +33,16 @@ VERSE_REFERENCES = [
     "Proverbs 3:5", "Matthew 5:16", "Isaiah 40:31", "1 Corinthians 13:4", "Ephesians 2:8"
 ]
 
-# List of sample prayers for random selection
+# List of sample prayers
 PRAYERS = [
-    "May God bless you with peace and strength today. Amen.",
-    "Lord, guide us with your wisdom and love. Amen.",
-    "Heavenly Father, protect us and grant us your grace. Amen."
+    "Lord, guide us with Your wisdom and love. Amen.",
+    "Father, grant us peace and strength today. Amen.",
+    "God, protect us with Your grace. Amen.",
+    "Lord, fill us with Your Holy Spirit. Amen.",
+    "Jesus, be our light in darkness. Amen."
 ]
 
-# Expanded fallback verses for API failure
+# Fallback verses for API failure
 FALLBACK_VERSES = [
     {
         "reference": "John 3:16",
@@ -69,7 +71,7 @@ FALLBACK_VERSES = [
     }
 ]
 
-# Convert verse reference to api.bible format (e.g., "John 3:16" -> "JHN.3.16")
+# Convert verse reference to api.bible format
 def format_verse_reference(reference: str) -> str:
     try:
         book, chapter_verse = reference.rsplit(" ", 1)
@@ -92,6 +94,9 @@ def format_verse_reference(reference: str) -> str:
         return reference.replace(" ", ".").replace(":", ".")
 
 async def fetch_verse(translation: str, reference: str, max_retries: int = 3) -> dict:
+    if not BIBLE_API_KEY:
+        logger.error("Skipping API call: BIBLE_API_KEY is not set")
+        return None
     bible_id = {
         "kjv": "de4e12af7f28f599-01",  # KJV
         "tel-irv": "a156e704dc937475-01"  # Telugu IRV
@@ -108,7 +113,7 @@ async def fetch_verse(translation: str, reference: str, max_retries: int = 3) ->
     for attempt in range(1, max_retries + 1):
         try:
             async with aiohttp.ClientSession() as session:
-                async with session.get(url, headers=headers, timeout=15) as response:
+                async with session.get(url, headers=headers, timeout=10) as response:
                     logger.info(f"API request to {url} (attempt {attempt}): Status {response.status}, Headers {response.headers}")
                     if response.status == 200:
                         if response.content_type == "application/json":
@@ -123,6 +128,9 @@ async def fetch_verse(translation: str, reference: str, max_retries: int = 3) ->
                         logger.warning(f"Rate limit hit for {url} (attempt {attempt}). Waiting {retry_after} seconds...")
                         await asyncio.sleep(retry_after)
                         continue
+                    elif response.status in (401, 403):  # Authentication errors
+                        logger.error(f"Authentication error for {url} (attempt {attempt}): Status {response.status}, Response: {await response.text()[:500]}")
+                        return None
                     else:
                         response_text = await response.text()
                         logger.error(f"Failed to fetch verse from {url} (attempt {attempt}): Status {response.status}, Response: {response_text[:500]}")
@@ -131,7 +139,7 @@ async def fetch_verse(translation: str, reference: str, max_retries: int = 3) ->
             logger.error(f"Client error fetching verse from {url} (attempt {attempt}): {str(e)}")
             if attempt == max_retries:
                 return None
-            await asyncio.sleep(2 ** attempt)  # Exponential backoff
+            await asyncio.sleep(2 ** attempt)
         except asyncio.TimeoutError:
             logger.error(f"Timeout fetching verse from {url} (attempt {attempt})")
             if attempt == max_retries:
@@ -187,26 +195,45 @@ async def verse(update: Update, context: ContextTypes.DEFAULT_TYPE):
     reference = random.choice(VERSE_REFERENCES)
     verse_text = ""
     try:
-        english_verse = await fetch_verse("kjv", reference)
-        await asyncio.sleep(1)  # Delay to avoid rate limiting
-        telugu_verse = await fetch_verse("tel-irv", reference)
-        if english_verse and telugu_verse:
-            verse_text = (
-                f"📖 *Daily Verse: {reference}*\n\n"
-                f"🇬🇧 *English (KJV)*: {english_verse['text']}\n\n"
-                f"🇮🇳 *Telugu (IRV)*: {telugu_verse['text']}"
-            )
-        else:
-            fallback_verse = random.choice(FALLBACK_VERSES)
-            logger.warning(f"API failed for {reference}, using fallback verse {fallback_verse['reference']}")
-            verse_text = (
-                f"📖 *Daily Verse: {fallback_verse['reference']}* (API unavailable, using fallback)\n\n"
-                f"🇬🇧 *English (KJV)*: {fallback_verse['english']}\n\n"
-                f"🇮🇳 *Telugu (IRV)*: {fallback_verse['telugu']}"
-            )
+        # Set a timeout for the entire verse function to avoid callback query expiration
+        async with asyncio.timeout(20):  # Telegram callback query expires after ~30 seconds
+            if not BIBLE_API_KEY:
+                fallback_verse = random.choice(FALLBACK_VERSES)
+                logger.warning(f"BIBLE_API_KEY missing, using fallback verse {fallback_verse['reference']}")
+                verse_text = (
+                    f"📖 *Daily Verse: {fallback_verse['reference']}* (API unavailable, using fallback)\n\n"
+                    f"🇬🇧 *English (KJV)*: {fallback_verse['english']}\n\n"
+                    f"🇮🇳 *Telugu (IRV)*: {fallback_verse['telugu']}"
+                )
+            else:
+                english_verse = await fetch_verse("kjv", reference)
+                await asyncio.sleep(0.5)  # Avoid rate limiting
+                telugu_verse = await fetch_verse("tel-irv", reference)
+                if english_verse and telugu_verse:
+                    verse_text = (
+                        f"📖 *Daily Verse: {reference}*\n\n"
+                        f"🇬🇧 *English (KJV)*: {english_verse['text']}\n\n"
+                        f"🇮🇳 *Telugu (IRV)*: {telugu_verse['text']}"
+                    )
+                else:
+                    fallback_verse = random.choice(FALLBACK_VERSES)
+                    logger.warning(f"API failed for {reference}, using fallback verse {fallback_verse['reference']}")
+                    verse_text = (
+                        f"📖 *Daily Verse: {fallback_verse['reference']}* (API unavailable, using fallback)\n\n"
+                        f"🇬🇧 *English (KJV)*: {fallback_verse['english']}\n\n"
+                        f"🇮🇳 *Telugu (IRV)*: {fallback_verse['telugu']}"
+                    )
+    except asyncio.TimeoutError:
+        fallback_verse = random.choice(FALLBACK_VERSES)
+        logger.error(f"Verse function timed out for {reference}, using fallback verse {fallback_verse['reference']}")
+        verse_text = (
+            f"📖 *Daily Verse: {fallback_verse['reference']}* (Request timed out, using fallback)\n\n"
+            f"🇬🇧 *English (KJV)*: {fallback_verse['english']}\n\n"
+            f"🇮🇳 *Telugu (IRV)*: {fallback_verse['telugu']}"
+        )
     except Exception as e:
         fallback_verse = random.choice(FALLBACK_VERSES)
-        logger.error(f"Error in verse function: {str(e)}")
+        logger.error(f"Error in verse function for {reference}: {str(e)}")
         verse_text = (
             f"📖 *Daily Verse: {fallback_verse['reference']}* (Error occurred, using fallback)\n\n"
             f"🇬🇧 *English (KJV)*: {fallback_verse['english']}\n\n"
@@ -244,7 +271,7 @@ async def broadcast(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
-    logger.info(f"Received callback query with data: {query.data}")
+    logger.info(f"Received callback query with data: {query.data}, Query ID: {query.id}")
     try:
         await query.answer()
         if query.data == "verse":
@@ -255,8 +282,10 @@ async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await send_message_with_retry(update, "Contact our admin: @YourAdminUsername")
         else:
             logger.warning(f"Unknown callback data: {query.data}")
+    except InvalidCallbackQuery as e:
+        logger.error(f"Invalid callback query error: {str(e)}, Query ID: {query.id}")
     except Exception as e:
-        logger.error(f"Error in button_callback: {str(e)}")
+        logger.error(f"Error in button_callback: {str(e)}, Query ID: {query.id}")
 
 async def main():
     app = Application.builder().token(os.getenv("BOT_TOKEN")).build()
