@@ -13,7 +13,7 @@ from telegram.ext import (
     ContextTypes,
     filters,
 )
-from telegram.error import RetryAfter, TimedOut, InvalidCallbackQuery
+from telegram.error import RetryAfter, TimedOut, TelegramError
 
 # Set up logging
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
@@ -170,8 +170,8 @@ async def send_message_with_retry(update: Update, text: str, parse_mode: str = N
         except TimedOut:
             logger.warning(f"TimedOut error on attempt {attempt + 1}. Retrying...")
             await asyncio.sleep(2 ** attempt + 1)
-        except Exception as e:
-            logger.error(f"Error sending message (attempt {attempt + 1}): {str(e)}")
+        except TelegramError as e:
+            logger.error(f"Telegram error sending message (attempt {attempt + 1}): {str(e)}")
             if attempt == max_retries - 1:
                 raise
             await asyncio.sleep(2 ** attempt + 1)
@@ -195,8 +195,7 @@ async def verse(update: Update, context: ContextTypes.DEFAULT_TYPE):
     reference = random.choice(VERSE_REFERENCES)
     verse_text = ""
     try:
-        # Set a timeout for the entire verse function to avoid callback query expiration
-        async with asyncio.timeout(20):  # Telegram callback query expires after ~30 seconds
+        async with asyncio.timeout(20):
             if not BIBLE_API_KEY:
                 fallback_verse = random.choice(FALLBACK_VERSES)
                 logger.warning(f"BIBLE_API_KEY missing, using fallback verse {fallback_verse['reference']}")
@@ -207,7 +206,7 @@ async def verse(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 )
             else:
                 english_verse = await fetch_verse("kjv", reference)
-                await asyncio.sleep(0.5)  # Avoid rate limiting
+                await asyncio.sleep(0.5)
                 telugu_verse = await fetch_verse("tel-irv", reference)
                 if english_verse and telugu_verse:
                     verse_text = (
@@ -265,7 +264,7 @@ async def broadcast(update: Update, context: ContextTypes.DEFAULT_TYPE):
     for user_id in ADMIN_IDS:
         try:
             await context.bot.send_message(chat_id=user_id, text=message)
-        except telegram.error.TelegramError as e:
+        except TelegramError as e:
             logger.error(f"Failed to send broadcast to {user_id}: {e}")
     await send_message_with_retry(update, "Broadcast sent!")
 
@@ -282,8 +281,8 @@ async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await send_message_with_retry(update, "Contact our admin: @YourAdminUsername")
         else:
             logger.warning(f"Unknown callback data: {query.data}")
-    except InvalidCallbackQuery as e:
-        logger.error(f"Invalid callback query error: {str(e)}, Query ID: {query.id}")
+    except TelegramError as e:
+        logger.error(f"Telegram error in button_callback: {str(e)}, Query ID: {query.id}")
     except Exception as e:
         logger.error(f"Error in button_callback: {str(e)}, Query ID: {query.id}")
 
