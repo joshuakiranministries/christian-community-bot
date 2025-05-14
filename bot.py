@@ -96,6 +96,21 @@ async def broadcast(update: Update, context: ContextTypes.DEFAULT_TYPE):
         except Exception:
             pass
     await update.message.reply_text("Broadcast sent!")
+# callback Handler
+async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    query = update.callback_query
+    await query.answer()  # Acknowledge the callback query
+
+    # Handle button clicks based on callback_data
+    if query.data == "verse":
+        # Call the verse function logic (same as /verse command)
+        await query.message.reply_text("Here is your daily verse: [Your verse logic here]")
+    elif query.data == "prayer":
+        # Call the prayer function logic (same as /prayer command)
+        await query.message.reply_text("Here is your prayer: [Your prayer logic here]")
+    elif query.data == "contact_admin":
+        # Provide admin contact or a link
+        await query.message.reply_text("Contact our admin: @YourAdminUsername")
 
 # Webhook setup
 async def main():
