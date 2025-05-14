@@ -10,7 +10,6 @@ from telegram.constants import ParseMode
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 ADMIN_IDS = [int(id) for id in os.getenv("ADMIN_IDS", "").split(",") if id]
 AFFILIATE_LINK = os.getenv("AFFILIATE_LINK", "https://example.com/affiliate")
-WEBSITE_LINK = os.getenv("WEBSITE_LINK", "https://bibleinfotelugu.in/")
 
 # Initialize SQLite database
 def init_db():
@@ -36,24 +35,16 @@ def add_user(user_id):
     conn.close()
 
 # Start command
-from telegram import InlineKeyboardButton, InlineKeyboardMarkup
-
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    # Define the welcome message
-    welcome_message = "Welcome to Christian Community Bot! 🙏\nChoose an option below:"
-
-    # Create inline keyboard buttons
-    keyboard = [
-        [
-            InlineKeyboardButton("Daily Verse 📖", callback_data="verse"),
-            InlineKeyboardButton("Prayer 🙏", callback_data="prayer"),
-        ],
-        [InlineKeyboardButton("Contact Admin ✉️", callback_data="contact_admin")],
-    ]
+    user_id = update.effective_user.id
+    add_user(user_id)
+    keyboard = [[InlineKeyboardButton("Support Us", url=AFFILIATE_LINK)]]
     reply_markup = InlineKeyboardMarkup(keyboard)
-
-    # Send welcome message with buttons
-    await update.message.reply_text(welcome_message, reply_markup=reply_markup)
+    await update.message.reply_text(
+        "Welcome to Christian Community Bot! 🙏\nGet daily Bible verses and prayers.\nUse /verse or /prayer to start.",
+        reply_markup=reply_markup,
+        parse_mode=ParseMode.HTML
+    )
 
 # Verse command
 async def verse(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -96,21 +87,6 @@ async def broadcast(update: Update, context: ContextTypes.DEFAULT_TYPE):
         except Exception:
             pass
     await update.message.reply_text("Broadcast sent!")
-# callback Handler
-async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    query = update.callback_query
-    await query.answer()  # Acknowledge the callback query
-
-    # Handle button clicks based on callback_data
-    if query.data == "verse":
-        # Call the verse function logic (same as /verse command)
-        await query.message.reply_text("Here is your daily verse: [Your verse logic here]")
-    elif query.data == "prayer":
-        # Call the prayer function logic (same as /prayer command)
-        await query.message.reply_text("Here is your prayer: [Your prayer logic here]")
-    elif query.data == "contact_admin":
-        # Provide admin contact or a link
-        await query.message.reply_text("Contact our admin: @YourAdminUsername")
 
 # Webhook setup
 async def main():
