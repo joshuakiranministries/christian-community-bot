@@ -32,11 +32,21 @@ PRAYERS = [
     "Heavenly Father, protect us and grant us your grace. Amen."
 ]
 
+# Fallback static verse for API failure
+FALLBACK_VERSE = {
+    "reference": "John 3:16",
+    "english": "For God so loved the world, that he gave his only begotten Son, that whosoever believeth in him should not perish, but have everlasting life.",
+    "telugu": "దేవుడు లోకమును ఎంతగా ప్రేమించెనంటే, తన ఏకైక కుమారునిగా జన్మించినవానిని అర్పించెను, ఆయనయందు విశ్వాసముంచు ప్రతివాడును నశించక, నిత్యజీవము పొందునట్లు."
+}
+
 async def fetch_verse(translation: str, reference: str) -> dict:
     url = f"https://getbible.net/v2/{translation}/{reference}.json"
+    headers = {
+        "User-Agent": "ChristianCommunityBot/1.0 (https://github.com/<your-repo>)"
+    }
     try:
         async with aiohttp.ClientSession() as session:
-            async with session.get(url, timeout=10) as response:
+            async with session.get(url, headers=headers, timeout=10) as response:
                 if response.status == 200:
                     return await response.json()
                 else:
@@ -70,22 +80,37 @@ async def verse(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 f"🇮🇳 *Telugu (IRV)*: {telugu_verse['text']}"
             )
         else:
-            verse_text = f"Sorry, could not fetch the verse for {reference}. Please try again later."
+            logger.warning(f"API failed for {reference}, using fallback verse")
+            verse_text = (
+                f"📖 *Daily Verse: {FALLBACK_VERSE['reference']}* (API unavailable, using fallback)\n\n"
+                f"🇬🇧 *English (KJV)*: {FALLBACK_VERSE['english']}\n\n"
+                f"🇮🇳 *Telugu (IRV)*: {FALLBACK_VERSE['telugu']}"
+            )
     except Exception as e:
-        verse_text = f"Error fetching verse: {str(e)}. Please try again later."
         logger.error(f"Error in verse function: {str(e)}")
-    
-    if update.message:
-        await update.message.reply_text(verse_text, parse_mode="Markdown")
-    elif update.callback_query:
-        await update.callback_query.message.reply_text(verse_text, parse_mode="Markdown")
+        verse_text = (
+            f"📖 *Daily Verse: {FALLBACK_VERSE['reference']}* (Error occurred, using fallback)\n\n"
+            f"🇬🇧 *English (KJV)*: {FALLBACK_VERSE['english']}\n\n"
+            f"🇮🇳 *Telugu (IRV)*: {FALLBACK_VERSE['telugu']}"
+        )
+
+    try:
+        if update.message:
+            await update.message.reply_text(verse_text, parse_mode="Markdown")
+        elif update.callback_query:
+            await update.callback_query.message.reply_text(verse_text, parse_mode="Markdown")
+    except Exception as e:
+        logger.error(f"Error sending verse message: {str(e)}")
 
 async def prayer(update: Update, context: ContextTypes.DEFAULT_TYPE):
     prayer_text = random.choice(PRAYERS)
-    if update.message:
-        await update.message.reply_text(prayer_text)
-    elif update.callback_query:
-        await update.callback_query.message.reply_text(prayer_text)
+    try:
+        if update.message:
+            await update.message.reply_text(prayer_text)
+        elif update.callback_query:
+            await update.callback_query.message.reply_text(prayer_text)
+    except Exception as e:
+        logger.error(f"Error sending prayer message: {str(e)}")
 
 async def broadcast(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if update.message is None:
