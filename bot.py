@@ -41,7 +41,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     keyboard = [[InlineKeyboardButton("Support Us", url=AFFILIATE_LINK)]]
     reply_markup = InlineKeyboardMarkup(keyboard)
     await update.message.reply_text(
-        "Welcome to Christian Community Bot! 🙏\nGet daily Bible verses and prayers.\nUse /verse or /prayer to start.",
+        "Welcome to our Telugu Christian community! 🙏\n May the Lord bless you abundantly. \nLet’s grow together in faith.\n\n\nమన తెలుగు క్రైస్తవ సమాజానికి స్వాగతం! 🙏\n ప్రభువు మీరు అమితంగా ఆశీర్వదించాలని కోరుకుంటున్నాము. \nమనం విశ్వాసంలో కలిసి ఎదగుదాం.\nUse /verse or /prayer to start.",
         reply_markup=reply_markup,
         parse_mode=ParseMode.HTML
     )
