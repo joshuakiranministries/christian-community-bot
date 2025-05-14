@@ -10,6 +10,7 @@ from telegram.constants import ParseMode
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 ADMIN_IDS = [int(id) for id in os.getenv("ADMIN_IDS", "").split(",") if id]
 AFFILIATE_LINK = os.getenv("AFFILIATE_LINK", "https://example.com/affiliate")
+WEBSITE_LINK = os.getenv("WEBSITE_LINK", "https://bibleinfotelugu.in/")
 
 # Initialize SQLite database
 def init_db():
@@ -39,6 +40,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
     add_user(user_id)
     keyboard = [[InlineKeyboardButton("Support Us", url=AFFILIATE_LINK)]]
+    keyboard = [[InlineKeyboardButton("Our Website", url=WEBSITE_LINK)]]
     reply_markup = InlineKeyboardMarkup(keyboard)
     await update.message.reply_text(
         "Welcome to Christian Community Bot! 🙏\nGet daily Bible verses and prayers.\nUse /verse or /prayer to start.",
