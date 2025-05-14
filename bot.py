@@ -96,7 +96,7 @@ async def main():
     app.add_handler(CommandHandler("verse", verse))
     app.add_handler(CommandHandler("prayer", prayer))
     app.add_handler(CommandHandler("donate", donate))
-    app.add_handler(CommandHandler("broadcast", broadcast, filters=filters.User(user_ids=ADMIN_IDS)))
+    app.add_handler(CommandHandler("broadcast", broadcast, filters=filters.User(ADMIN_IDS)))
     # Use webhook for Render
     webhook_url = os.getenv("WEBHOOK_URL", f"https://{os.getenv('RENDER_EXTERNAL_HOSTNAME')}/webhook")
     await app.bot.set_webhook(webhook_url)
