@@ -91,7 +91,7 @@ def format_verse_reference(reference: str) -> str:
         logger.error(f"Error formatting verse reference {reference}: {str(e)}")
         return reference.replace(" ", ".").replace(":", ".")
 
-async def fetch_verse(translation: str, reference: str) -> dict:
+async def fetch_verse(translation: str, reference: str, max_retries: int = 3) -> dict:
     bible_id = {
         "kjv": "de4e12af7f28f599-01",  # KJV
         "tel-irv": "a156e704dc937475-01"  # Telugu IRV
@@ -105,31 +105,44 @@ async def fetch_verse(translation: str, reference: str) -> dict:
         "api-key": BIBLE_API_KEY,
         "User-Agent": "ChristianCommunityBot/1.0 (https://github.com/<your-repo>)",
     }
-    try:
-        async with aiohttp.ClientSession() as session:
-            async with session.get(url, headers=headers, timeout=10) as response:
-                logger.info(f"API request to {url}: Status {response.status}, Headers {response.headers}")
-                if response.status == 200:
-                    if response.content_type == "application/json":
-                        data = await response.json()
-                        return {"text": data["data"]["content"]}
+    for attempt in range(1, max_retries + 1):
+        try:
+            async with aiohttp.ClientSession() as session:
+                async with session.get(url, headers=headers, timeout=15) as response:
+                    logger.info(f"API request to {url} (attempt {attempt}): Status {response.status}, Headers {response.headers}")
+                    if response.status == 200:
+                        if response.content_type == "application/json":
+                            data = await response.json()
+                            return {"text": data["data"]["content"]}
+                        else:
+                            response_text = await response.text()
+                            logger.error(f"Unexpected mimetype {response.content_type} from {url} (attempt {attempt}). Response: {response_text[:500]}")
+                            return None
+                    elif response.status == 429:  # Rate limit
+                        retry_after = int(response.headers.get("Retry-After", 5))
+                        logger.warning(f"Rate limit hit for {url} (attempt {attempt}). Waiting {retry_after} seconds...")
+                        await asyncio.sleep(retry_after)
+                        continue
                     else:
                         response_text = await response.text()
-                        logger.error(f"Unexpected mimetype {response.content_type} from {url}. Response: {response_text[:500]}")
+                        logger.error(f"Failed to fetch verse from {url} (attempt {attempt}): Status {response.status}, Response: {response_text[:500]}")
                         return None
-                else:
-                    response_text = await response.text()
-                    logger.error(f"Failed to fetch verse from {url}: Status {response.status}, Response: {response_text[:500]}")
-                    return None
-    except aiohttp.ClientError as e:
-        logger.error(f"Client error fetching verse from {url}: {str(e)}")
-        return None
-    except asyncio.TimeoutError:
-        logger.error(f"Timeout fetching verse from {url}")
-        return None
-    except Exception as e:
-        logger.error(f"Unexpected error fetching verse from {url}: {str(e)}")
-        return None
+        except aiohttp.ClientError as e:
+            logger.error(f"Client error fetching verse from {url} (attempt {attempt}): {str(e)}")
+            if attempt == max_retries:
+                return None
+            await asyncio.sleep(2 ** attempt)  # Exponential backoff
+        except asyncio.TimeoutError:
+            logger.error(f"Timeout fetching verse from {url} (attempt {attempt})")
+            if attempt == max_retries:
+                return None
+            await asyncio.sleep(2 ** attempt)
+        except Exception as e:
+            logger.error(f"Unexpected error fetching verse from {url} (attempt {attempt}): {str(e)}")
+            if attempt == max_retries:
+                return None
+            await asyncio.sleep(2 ** attempt)
+    return None
 
 async def send_message_with_retry(update: Update, text: str, parse_mode: str = None, reply_markup=None, max_retries: int = 3):
     for attempt in range(max_retries):
@@ -145,7 +158,7 @@ async def send_message_with_retry(update: Update, text: str, parse_mode: str = N
             return
         except RetryAfter as e:
             logger.warning(f"RetryAfter error: {e}. Waiting {e.retry_after} seconds...")
-            await asyncio.sleep(e.retry_after + 1)  # Add buffer
+            await asyncio.sleep(e.retry_after + 1)
         except TimedOut:
             logger.warning(f"TimedOut error on attempt {attempt + 1}. Retrying...")
             await asyncio.sleep(2 ** attempt + 1)
