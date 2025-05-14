@@ -92,13 +92,13 @@ async def fetch_verse(translation: str, reference: str) -> dict:
         logger.error(f"Error fetching verse from {url}: {str(e)}")
         return None
 
-async def send_message_with_retry(update: Update, text: str, parse_mode: str = None, max_retries: int = 3):
+async def send_message_with_retry(update: Update, text: str, parse_mode: str = None, reply_markup=None, max_retries: int = 3):
     for attempt in range(max_retries):
         try:
             if update.message:
-                await update.message.reply_text(text, parse_mode=parse_mode)
+                await update.message.reply_text(text, parse_mode=parse_mode, reply_markup=reply_markup)
             elif update.callback_query:
-                await update.callback_query.message.reply_text(text, parse_mode=parse_mode)
+                await update.callback_query.message.reply_text(text, parse_mode=parse_mode, reply_markup=reply_markup)
             else:
                 logger.error("No message or callback query found in update")
                 raise ValueError("No valid message or callback query")
@@ -126,7 +126,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
     try:
-        await send_message_with_retry(update, welcome_message, reply_markup=reply_markup)
+        await send_message_with_retry(update, welcome_message, parse_mode="Markdown", reply_markup=reply_markup)
     except Exception as e:
         logger.error(f"Error sending start message: {str(e)}")
 
