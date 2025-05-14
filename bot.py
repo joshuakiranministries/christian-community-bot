@@ -114,7 +114,7 @@ async def webhook():
     await app.process_update(update)
     return "OK", 200
 
-@flask_app.route("/webhook")
+@flask_app.route("/")
 def home():
     return "Christian Community Bot is running!"
 
