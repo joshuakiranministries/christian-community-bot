@@ -3,6 +3,7 @@ import telegram
 import aiohttp
 import random
 import logging
+import asyncio
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.ext import (
     Application,
@@ -16,8 +17,9 @@ from telegram.ext import (
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# Assuming ADMIN_IDS is defined
+# Assuming ADMIN_IDS and API_KEY are defined
 ADMIN_IDS = [int(x) for x in os.getenv("ADMIN_IDS", "").split(",") if x]
+API_KEY = os.getenv("GETBIBLE_API_KEY", "")  # Add API key in Render environment variables if required
 
 # List of verse references for random selection
 VERSE_REFERENCES = [
@@ -42,8 +44,10 @@ FALLBACK_VERSE = {
 async def fetch_verse(translation: str, reference: str) -> dict:
     url = f"https://getbible.net/v2/{translation}/{reference}.json"
     headers = {
-        "User-Agent": "ChristianCommunityBot/1.0 (https://github.com/<your-repo>)"
+        "User-Agent": "ChristianCommunityBot/1.0 (https://github.com/<your-repo>)",
     }
+    if API_KEY:
+        headers["Authorization"] = f"Bearer {API_KEY}"  # Add API key if required
     try:
         async with aiohttp.ClientSession() as session:
             async with session.get(url, headers=headers, timeout=10) as response:
@@ -66,12 +70,17 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         [InlineKeyboardButton("Contact Admin ✉️", callback_data="contact_admin")],
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
-    await update.message.reply_text(welcome_message, reply_markup=reply_markup)
+    try:
+        await update.message.reply_text(welcome_message, reply_markup=reply_markup)
+    except Exception as e:
+        logger.error(f"Error sending start message: {str(e)}")
 
 async def verse(update: Update, context: ContextTypes.DEFAULT_TYPE):
     reference = random.choice(VERSE_REFERENCES)
+    verse_text = ""
     try:
         english_verse = await fetch_verse("kjv", reference)
+        await asyncio.sleep(1)  # Add delay to avoid rate limiting
         telugu_verse = await fetch_verse("tel-irv", reference)
         if english_verse and telugu_verse:
             verse_text = (
@@ -99,6 +108,8 @@ async def verse(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await update.message.reply_text(verse_text, parse_mode="Markdown")
         elif update.callback_query:
             await update.callback_query.message.reply_text(verse_text, parse_mode="Markdown")
+        else:
+            logger.error("No message or callback query found in update")
     except Exception as e:
         logger.error(f"Error sending verse message: {str(e)}")
 
@@ -109,6 +120,8 @@ async def prayer(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await update.message.reply_text(prayer_text)
         elif update.callback_query:
             await update.callback_query.message.reply_text(prayer_text)
+        else:
+            logger.error("No message or callback query found in update")
     except Exception as e:
         logger.error(f"Error sending prayer message: {str(e)}")
 
@@ -131,15 +144,18 @@ async def broadcast(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     logger.info(f"Received callback query with data: {query.data}")
-    await query.answer()
-    if query.data == "verse":
-        await verse(update, context)
-    elif query.data == "prayer":
-        await prayer(update, context)
-    elif query.data == "contact_admin":
-        await query.message.reply_text("Contact our admin: @YourAdminUsername")
-    else:
-        logger.warning(f"Unknown callback data: {query.data}")
+    try:
+        await query.answer()
+        if query.data == "verse":
+            await verse(update, context)
+        elif query.data == "prayer":
+            await prayer(update, context)
+        elif query.data == "contact_admin":
+            await query.message.reply_text("Contact our admin: @YourAdminUsername")
+        else:
+            logger.warning(f"Unknown callback data: {query.data}")
+    except Exception as e:
+        logger.error(f"Error in button_callback: {str(e)}")
 
 async def main():
     app = Application.builder().token(os.getenv("BOT_TOKEN")).build()
@@ -156,10 +172,14 @@ flask_app = Flask(__name__)
 
 @flask_app.route("/webhook", methods=["POST"])
 async def webhook():
-    app = await main()
-    update = Update.de_json(request.get_json(force=True), app.bot)
-    await app.process_update(update)
-    return "OK", 200
+    try:
+        app = await main()
+        update = Update.de_json(request.get_json(force=True), app.bot)
+        await app.process_update(update)
+        return "OK", 200
+    except Exception as e:
+        logger.error(f"Error in webhook: {str(e)}")
+        return "Error", 500
 
 if __name__ == "__main__":
     flask_app.run(host="0.0.0.0", port=int(os.getenv("PORT", 10000)))
