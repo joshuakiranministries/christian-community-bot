@@ -1,67 +1,322 @@
-2025-05-14T11:47:57.079823642Z Collecting typing-extensions>=4; python_version < "3.11"
-2025-05-14T11:47:57.084613091Z   Using cached typing_extensions-4.13.2-py3-none-any.whl (45 kB)
-2025-05-14T11:47:57.159263742Z Collecting async-timeout<5.0,>=4.0.0a3
-2025-05-14T11:47:57.161170363Z   Using cached async_timeout-4.0.3-py3-none-any.whl (5.7 kB)
-2025-05-14T11:47:58.019801376Z Collecting multidict<7.0,>=4.5
-2025-05-14T11:47:58.022157589Z   Using cached multidict-6.4.3-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (216 kB)
-2025-05-14T11:47:58.140831242Z Collecting aiosignal>=1.1.2
-2025-05-14T11:47:58.142854199Z   Using cached aiosignal-1.3.2-py2.py3-none-any.whl (7.6 kB)
-2025-05-14T11:47:59.441981Z Collecting yarl<2.0,>=1.0
-2025-05-14T11:47:59.44490441Z   Using cached yarl-1.20.0-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (335 kB)
-2025-05-14T11:47:59.695490309Z Collecting frozenlist>=1.1.1
-2025-05-14T11:47:59.697857322Z   Using cached frozenlist-1.6.0-cp39-cp39-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_17_x86_64.manylinux2014_x86_64.whl (288 kB)
-2025-05-14T11:47:59.749243257Z Collecting attrs>=17.3.0
-2025-05-14T11:47:59.751410361Z   Using cached attrs-25.3.0-py3-none-any.whl (63 kB)
-2025-05-14T11:47:59.911160303Z Collecting httpcore<0.17.0,>=0.15.0
-2025-05-14T11:47:59.913632322Z   Using cached httpcore-0.16.3-py3-none-any.whl (69 kB)
-2025-05-14T11:47:59.94717556Z Collecting sniffio
-2025-05-14T11:47:59.949133274Z   Using cached sniffio-1.3.1-py3-none-any.whl (10 kB)
-2025-05-14T11:47:59.981758649Z Collecting rfc3986[idna2008]<2,>=1.3
-2025-05-14T11:47:59.983756175Z   Using cached rfc3986-1.5.0-py2.py3-none-any.whl (31 kB)
-2025-05-14T11:48:00.143809802Z Collecting propcache>=0.2.1
-2025-05-14T11:48:00.145997487Z   Using cached propcache-0.3.1-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (209 kB)
-2025-05-14T11:48:00.175858589Z Collecting h11<0.15,>=0.13
-2025-05-14T11:48:00.177680496Z   Using cached h11-0.14.0-py3-none-any.whl (58 kB)
-2025-05-14T11:48:00.242288005Z Collecting anyio<5.0,>=3.0
-2025-05-14T11:48:00.244310412Z   Using cached anyio-4.9.0-py3-none-any.whl (100 kB)
-2025-05-14T11:48:00.299766482Z Collecting exceptiongroup>=1.0.2; python_version < "3.11"
-2025-05-14T11:48:00.302725904Z   Using cached exceptiongroup-1.3.0-py3-none-any.whl (16 kB)
-2025-05-14T11:48:00.465869469Z Installing collected packages: certifi, h11, sniffio, typing-extensions, exceptiongroup, idna, anyio, httpcore, rfc3986, httpx, python-telegram-bot, click, MarkupSafe, werkzeug, Jinja2, itsdangerous, flask, charset-normalizer, urllib3, requests, asgiref, async-timeout, multidict, frozenlist, aiosignal, propcache, yarl, attrs, aiohttp
-2025-05-14T11:48:02.031033649Z Successfully installed Jinja2-3.1.6 MarkupSafe-3.0.2 aiohttp-3.8.6 aiosignal-1.3.2 anyio-4.9.0 asgiref-3.8.1 async-timeout-4.0.3 attrs-25.3.0 certifi-2025.4.26 charset-normalizer-2.1.1 click-8.1.8 exceptiongroup-1.3.0 flask-2.0.1 frozenlist-1.6.0 h11-0.14.0 httpcore-0.16.3 httpx-0.23.3 idna-3.10 itsdangerous-2.2.0 multidict-6.4.3 propcache-0.3.1 python-telegram-bot-20.0 requests-2.28.1 rfc3986-1.5.0 sniffio-1.3.1 typing-extensions-4.13.2 urllib3-1.26.20 werkzeug-2.3.8 yarl-1.20.0
-2025-05-14T11:48:02.040187388Z WARNING: You are using pip version 20.2.3; however, version 25.1.1 is available.
-2025-05-14T11:48:02.040205799Z You should consider upgrading via the '/opt/render/project/src/.venv/bin/python3.9 -m pip install --upgrade pip' command.
-2025-05-14T11:48:02.864170899Z ==> Uploading build...
-2025-05-14T11:48:12.284043539Z ==> Uploaded in 7.0s. Compression took 2.4s
-2025-05-14T11:48:12.337385787Z ==> Build successful 🎉
-2025-05-14T11:48:14.14288538Z ==> Deploying...
-2025-05-14T11:48:44.766166067Z ==> Running 'python bot.py'
-2025-05-14T11:48:52.069548308Z  * Serving Flask app 'bot' (lazy loading)
-2025-05-14T11:48:52.069571078Z  * Environment: production
-2025-05-14T11:48:52.069576518Z    WARNING: This is a development server. Do not use it in a production deployment.
-2025-05-14T11:48:52.069581058Z    Use a production WSGI server instead.
-2025-05-14T11:48:52.069586418Z  * Debug mode: off
-2025-05-14T11:48:52.071932186Z 2025-05-14 11:48:52,071 - werkzeug - INFO - WARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.
-2025-05-14T11:48:52.071947727Z  * Running on all addresses (0.0.0.0)
-2025-05-14T11:48:52.071952357Z  * Running on http://127.0.0.1:10000
-2025-05-14T11:48:52.071957117Z  * Running on http://10.214.16.94:10000
-2025-05-14T11:48:52.071961627Z 2025-05-14 11:48:52,071 - werkzeug - INFO - Press CTRL+C to quit
-2025-05-14T11:48:53.029526821Z 2025-05-14 11:48:53,029 - werkzeug - INFO - 127.0.0.1 - - [14/May/2025 11:48:53] "HEAD / HTTP/1.1" 404 -
-2025-05-14T11:48:54.870907532Z ==> Your service is live 🎉
-2025-05-14T11:48:55.645043061Z 2025-05-14 11:48:55,644 - werkzeug - INFO - 127.0.0.1 - - [14/May/2025 11:48:55] "GET / HTTP/1.1" 404 -
-2025-05-14T11:50:52.420582872Z 2025-05-14 11:50:52,420 - __main__ - INFO - Message sent successfully: Welcome to Christian Community Bot! 🙏
-2025-05-14T11:50:52.420656304Z Choose an op...
-2025-05-14T11:50:52.423667975Z 2025-05-14 11:50:52,422 - werkzeug - INFO - 127.0.0.1 - - [14/May/2025 11:50:52] "POST /webhook HTTP/1.1" 200 -
-2025-05-14T11:51:01.557316061Z 2025-05-14 11:51:01,557 - __main__ - INFO - Received callback query with data: prayer, Query ID: 3582527494432328996
-2025-05-14T11:51:02.291012706Z 2025-05-14 11:51:02,290 - __main__ - INFO - Message sent successfully: Lord, fill us with Your Holy Spirit. Amen....
-2025-05-14T11:51:02.29172384Z 2025-05-14 11:51:02,291 - werkzeug - INFO - 127.0.0.1 - - [14/May/2025 11:51:02] "POST /webhook HTTP/1.1" 200 -
-2025-05-14T11:51:05.876876165Z 2025-05-14 11:51:05,876 - __main__ - INFO - Received callback query with data: contact_admin, Query ID: 3582527493796797941
-2025-05-14T11:51:06.553836093Z 2025-05-14 11:51:06,553 - __main__ - INFO - Message sent successfully: Contact our admin: @YourAdminUsername...
-2025-05-14T11:51:06.554597858Z 2025-05-14 11:51:06,554 - werkzeug - INFO - 127.0.0.1 - - [14/May/2025 11:51:06] "POST /webhook HTTP/1.1" 200 -
-2025-05-14T11:51:09.975156409Z 2025-05-14 11:51:09,972 - __main__ - INFO - Received callback query with data: verse, Query ID: 3582527493988582192
-2025-05-14T11:51:20.688197513Z 2025-05-14 11:51:20,687 - __main__ - ERROR - Timeout fetching verse from https://api.bible/v1/bibles/de4e12af7f28f599-01/verses/PRO.3.5 (attempt 1)
-2025-05-14T11:51:30.369128372Z 2025-05-14 11:51:30,368 - __main__ - ERROR - Verse function timed out for Proverbs 3:5, using fallback verse Philippians 4:13
-2025-05-14T11:51:31.08674654Z 2025-05-14 11:51:31,086 - __main__ - INFO - Message sent successfully: 📖 *Daily Verse: Philippians 4:13* (Request timed o...
-2025-05-14T11:51:31.087522406Z 2025-05-14 11:51:31,087 - werkzeug - INFO - 127.0.0.1 - - [14/May/2025 11:51:31] "POST /webhook HTTP/1.1" 200 -
-2025-05-14T11:51:32.157496315Z 2025-05-14 11:51:32,156 - __main__ - INFO - Received callback query with data: prayer, Query ID: 3582527496163878744
-2025-05-14T11:51:32.903471601Z 2025-05-14 11:51:32,903 - __main__ - INFO - Message sent successfully: God, protect us with Your grace. Amen....
-2025-05-14T11:51:32.904152205Z 2025-05-14 11:51:32,904 - werkzeug - INFO - 127.0.0.1 - - [14/May/2025 11:51:32] "POST /webhook HTTP/1.1" 200 -
+import os
+import telegram
+import aiohttp
+import random
+import logging
+import asyncio
+import urllib.parse
+import time
+from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
+from telegram.ext import (
+    Application,
+    CommandHandler,
+    CallbackQueryHandler,
+    ContextTypes,
+    filters,
+)
+from telegram.error import RetryAfter, TimedOut, TelegramError
+
+# Set up logging
+logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+# Environment variables
+ADMIN_IDS = [int(x) for x in os.getenv("ADMIN_IDS", "").split(",") if x]
+BIBLE_API_KEY = os.getenv("BIBLE_API_KEY", "")
+
+# Validate BIBLE_API_KEY
+if not BIBLE_API_KEY:
+    logger.error("BIBLE_API_KEY is not set in environment variables. Falling back to local verses.")
+
+# List of verse references for random selection
+VERSE_REFERENCES = [
+    "John 3:16", "Psalm 23:1", "Romans 8:28", "Philippians 4:13", "Jeremiah 29:11",
+    "Proverbs 3:5", "Matthew 5:16", "Isaiah 40:31", "1 Corinthians 13:4", "Ephesians 2:8"
+]
+
+# List of sample prayers
+PRAYERS = [
+    "Lord, guide us with Your wisdom and love. Amen.",
+    "Father, grant us peace and strength today. Amen.",
+    "God, protect us with Your grace. Amen.",
+    "Lord, fill us with Your Holy Spirit. Amen.",
+    "Jesus, be our light in darkness. Amen."
+]
+
+# Fallback verses for API failure
+FALLBACK_VERSES = [
+    {
+        "reference": "John 3:16",
+        "english": "For God so loved the world, that he gave his only begotten Son, that whosoever believeth in him should not perish, but have everlasting life.",
+        "telugu": "దేవుడు లోకమును ఎంతగా ప్రేమించెనంటే, తన ఏకైక కుమారునిగా జన్మించినవానిని అర్పించెను, ఆయనయందు విశ్వాసముంచు ప్రతివాడును నశించక, నిత్యజీవము పొందునట్లు."
+    },
+    {
+        "reference": "Psalm 23:1",
+        "english": "The Lord is my shepherd; I shall not want.",
+        "telugu": "యెహోవా నా కాపరి, నాకు లేమి ఉండదు."
+    },
+    {
+        "reference": "Philippians 4:13",
+        "english": "I can do all things through Christ which strengtheneth me.",
+        "telugu": "నన్ను బలపరిచే క్రీస్తు ద్వారా నేను సమస్తమవు చేయగలను."
+    },
+    {
+        "reference": "Romans 8:28",
+        "english": "And we know that all things work together for good to them that love God, to them who are the called according to his purpose.",
+        "telugu": "దేవుని ప్రేమించువారికి, ఆయన సంకల్పమునుబట్టి పిలువబడినవారికి, సమస్తమును మేలుకొరకు కలిసి జరుగునని మనము ఎరుగుదుము."
+    },
+    {
+        "reference": "Jeremiah 29:11",
+        "english": "For I know the thoughts that I think toward you, saith the Lord, thoughts of peace, and not of evil, to give you an expected end.",
+        "telugu": "మీ గురించి నేను తలంచిన ఆలోచనలు నాకు తెలిసినవని యెహోవా వాక్కు; అవి మీకు శాంతి కలుగునట్లు కీడుకు కాక ఒక అంతము కలుగునట్లు ఆలోచనలు."
+    }
+]
+
+# Convert verse reference to api.bible format
+def format_verse_reference(reference: str) -> str:
+    try:
+        book, chapter_verse = reference.rsplit(" ", 1)
+        chapter, verse = chapter_verse.split(":")
+        book_abbr = {
+            "John": "JHN",
+            "Psalm": "PSA",
+            "Romans": "ROM",
+            "Philippians": "PHP",
+            "Jeremiah": "JER",
+            "Proverbs": "PRO",
+            "Matthew": "MAT",
+            "Isaiah": "ISA",
+            "1 Corinthians": "1CO",
+            "Ephesians": "EPH"
+        }.get(book, book.upper()[:3])
+        return f"{book_abbr}.{chapter}.{verse}"
+    except Exception as e:
+        logger.error(f"Error formatting verse reference {reference}: {str(e)}")
+        return reference.replace(" ", ".").replace(":", ".")
+
+async def fetch_verse(translation: str, reference: str, max_retries: int = 3) -> dict:
+    if not BIBLE_API_KEY:
+        logger.error("Skipping API call: BIBLE_API_KEY is not set")
+        return None
+    bible_id = {
+        "kjv": "de4e12af7f28f599-01",  # KJV
+        "tel-irv": "a156e704dc937475-01"  # Telugu IRV
+    }.get(translation)
+    if not bible_id:
+        logger.error(f"Invalid translation: {translation}")
+        return None
+    verse_id = format_verse_reference(reference)
+    url = f"https://api.bible/v1/bibles/{bible_id}/verses/{verse_id}"
+    headers = {
+        "api-key": BIBLE_API_KEY,
+        "User-Agent": "ChristianCommunityBot/1.0 (https://github.com/<your-repo>)",
+    }
+    for attempt in range(1, max_retries + 1):
+        start_time = time.time()
+        try:
+            async with aiohttp.ClientSession() as session:
+                async with session.get(url, headers=headers, timeout=15) as response:
+                    duration = time.time() - start_time
+                    logger.info(f"API request to {url} (attempt {attempt}): Status {response.status}, Headers {response.headers}, Duration {duration:.2f}s")
+                    if response.status == 200:
+                        if response.content_type == "application/json":
+                            data = await response.json()
+                            return {"text": data["data"]["content"]}
+                        else:
+                            response_text = await response.text()
+                            logger.error(f"Unexpected mimetype {response.content_type} from {url} (attempt {attempt}). Response: {response_text[:500]}")
+                            return None
+                    elif response.status == 429:  # Rate limit
+                        retry_after = int(response.headers.get("Retry-After", 5))
+                        logger.warning(f"Rate limit hit for {url} (attempt {attempt}). Waiting {retry_after} seconds...")
+                        await asyncio.sleep(retry_after)
+                        continue
+                    elif response.status in (401, 403):  # Authentication errors
+                        logger.error(f"Authentication error for {url} (attempt {attempt}): Status {response.status}, Response: {await response.text()[:500]}")
+                        return None
+                    else:
+                        response_text = await response.text()
+                        logger.error(f"Failed to fetch verse from {url} (attempt {attempt}): Status {response.status}, Response: {response_text[:500]}")
+                        return None
+        except aiohttp.ClientError as e:
+            duration = time.time() - start_time
+            logger.error(f"Client error fetching verse from {url} (attempt {attempt}): {str(e)}, Duration {duration:.2f}s")
+            if attempt == max_retries:
+                return None
+            await asyncio.sleep(2 ** (attempt - 1))
+        except asyncio.TimeoutError:
+            duration = time.time() - start_time
+            logger.error(f"Timeout fetching verse from {url} (attempt {attempt}), Duration {duration:.2f}s")
+            if attempt == max_retries:
+                return None
+            await asyncio.sleep(2 ** (attempt - 1))
+        except Exception as e:
+            duration = time.time() - start_time
+            logger.error(f"Unexpected error fetching verse from {url} (attempt {attempt}): {str(e)}, Duration {duration:.2f}s")
+            if attempt == max_retries:
+                return None
+            await asyncio.sleep(2 ** (attempt - 1))
+    return None
+
+async def send_message_with_retry(update: Update, text: str, parse_mode: str = None, reply_markup=None, max_retries: int = 3):
+    for attempt in range(max_retries):
+        try:
+            if update.message:
+                await update.message.reply_text(text, parse_mode=parse_mode, reply_markup=reply_markup)
+            elif update.callback_query:
+                await update.callback_query.message.reply_text(text, parse_mode=parse_mode, reply_markup=reply_markup)
+            else:
+                logger.error("No message or callback query found in update")
+                raise ValueError("No valid message or callback query")
+            logger.info(f"Message sent successfully: {text[:50]}...")
+            return
+        except RetryAfter as e:
+            logger.warning(f"RetryAfter error: {e}. Waiting {e.retry_after} seconds...")
+            await asyncio.sleep(e.retry_after + 1)
+        except TimedOut:
+            logger.warning(f"TimedOut error on attempt {attempt + 1}. Retrying...")
+            await asyncio.sleep(2 ** attempt + 1)
+        except TelegramError as e:
+            logger.error(f"Telegram error sending message (attempt {attempt + 1}): {str(e)}")
+            if attempt == max_retries - 1:
+                raise
+            await asyncio.sleep(2 ** attempt + 1)
+
+async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    welcome_message = "Welcome to Christian Community Bot! 🙏\nChoose an option below:"
+    keyboard = [
+        [
+            InlineKeyboardButton("Daily Verse 📖", callback_data="verse"),
+            InlineKeyboardButton("Prayer 🙏", callback_data="prayer"),
+        ],
+        [InlineKeyboardButton("Contact Admin ✉️", callback_data="contact_admin")],
+    ]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    try:
+        await send_message_with_retry(update, welcome_message, parse_mode="Markdown", reply_markup=reply_markup)
+    except Exception as e:
+        logger.error(f"Error sending start message: {str(e)}")
+
+async def verse(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    reference = random.choice(VERSE_REFERENCES)
+    verse_text = ""
+    try:
+        # Use asyncio.wait_for for Python 3.9 compatibility
+        async def fetch_verses():
+            if not BIBLE_API_KEY:
+                fallback_verse = random.choice(FALLBACK_VERSES)
+                logger.warning(f"BIBLE_API_KEY missing, using fallback verse {fallback_verse['reference']}")
+                return (
+                    f"📖 *Daily Verse: {fallback_verse['reference']}* (API unavailable, using fallback)\n\n"
+                    f"🇬🇧 *English (KJV)*: {fallback_verse['english']}\n\n"
+                    f"🇮🇳 *Telugu (IRV)*: {fallback_verse['telugu']}"
+                )
+            english_verse = await fetch_verse("kjv", reference)
+            await asyncio.sleep(0.5)
+            telugu_verse = await fetch_verse("tel-irv", reference)
+            if english_verse and telugu_verse:
+                return (
+                    f"📖 *Daily Verse: {reference}*\n\n"
+                    f"🇬🇧 *English (KJV)*: {english_verse['text']}\n\n"
+                    f"🇮🇳 *Telugu (IRV)*: {telugu_verse['text']}"
+                )
+            else:
+                fallback_verse = random.choice(FALLBACK_VERSES)
+                logger.warning(f"API failed for {reference}, using fallback verse {fallback_verse['reference']}")
+                return (
+                    f"📖 *Daily Verse: {fallback_verse['reference']}* (API unavailable, using fallback)\n\n"
+                    f"🇬🇧 *English (KJV)*: {fallback_verse['english']}\n\n"
+                    f"🇮🇳 *Telugu (IRV)*: {fallback_verse['telugu']}"
+                )
+
+        verse_text = await asyncio.wait_for(fetch_verses(), timeout=30)
+    except asyncio.TimeoutError:
+        fallback_verse = random.choice(FALLBACK_VERSES)
+        logger.error(f"Verse function timed out for {reference}, using fallback verse {fallback_verse['reference']}")
+        verse_text = (
+            f"📖 *Daily Verse: {fallback_verse['reference']}* (Request timed out, using fallback)\n\n"
+            f"🇬🇧 *English (KJV)*: {fallback_verse['english']}\n\n"
+            f"🇮🇳 *Telugu (IRV)*: {fallback_verse['telugu']}"
+        )
+    except Exception as e:
+        fallback_verse = random.choice(FALLBACK_VERSES)
+        logger.error(f"Error in verse function for {reference}: {str(e)}")
+        verse_text = (
+            f"📖 *Daily Verse: {fallback_verse['reference']}* (Error occurred, using fallback)\n\n"
+            f"🇬🇧 *English (KJV)*: {fallback_verse['english']}\n\n"
+            f"🇮🇳 *Telugu (IRV)*: {fallback_verse['telugu']}"
+        )
+
+    try:
+        await send_message_with_retry(update, verse_text, parse_mode="Markdown")
+    except Exception as e:
+        logger.error(f"Error sending verse message: {str(e)}")
+        raise
+
+async def prayer(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    prayer_text = random.choice(PRAYERS)
+    try:
+        await send_message_with_retry(update, prayer_text)
+    except Exception as e:
+        logger.error(f"Error sending prayer message: {str(e)}")
+
+async def broadcast(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if update.message is None:
+        logger.error("No message found in update for broadcast command")
+        return
+    try:
+        message = update.message.text.split(" ", 1)[1]
+    except IndexError:
+        await send_message_with_retry(update, "Please provide a message to broadcast. Usage: /broadcast <message>")
+        return
+    for user_id in ADMIN_IDS:
+        try:
+            await context.bot.send_message(chat_id=user_id, text=message)
+        except TelegramError as e:
+            logger.error(f"Failed to send broadcast to {user_id}: {e}")
+    await send_message_with_retry(update, "Broadcast sent!")
+
+async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    query = update.callback_query
+    logger.info(f"Received callback query with data: {query.data}, Query ID: {query.id}")
+    try:
+        await query.answer()
+        if query.data == "verse":
+            await verse(update, context)
+        elif query.data == "prayer":
+            await prayer(update, context)
+        elif query.data == "contact_admin":
+            await send_message_with_retry(update, "Contact our admin: @YourAdminUsername")
+        else:
+            logger.warning(f"Unknown callback data: {query.data}")
+    except TelegramError as e:
+        logger.error(f"Telegram error in button_callback: {str(e)}, Query ID: {query.id}")
+    except Exception as e:
+        logger.error(f"Error in button_callback: {str(e)}, Query ID: {query.id}")
+
+async def main():
+    app = Application.builder().token(os.getenv("BOT_TOKEN")).build()
+    app.add_handler(CommandHandler("start", start))
+    app.add_handler(CommandHandler("verse", verse))
+    app.add_handler(CommandHandler("prayer", prayer))
+    app.add_handler(CommandHandler("broadcast", broadcast, filters=filters.User(ADMIN_IDS)))
+    app.add_handler(CallbackQueryHandler(button_callback))
+    await app.initialize()
+    return app
+
+from flask import Flask, request
+flask_app = Flask(__name__)
+
+@flask_app.route("/webhook", methods=["POST"])
+async def webhook():
+    try:
+        app = await main()
+        update = Update.de_json(request.get_json(force=True), app.bot)
+        await app.process_update(update)
+        return "OK", 200
+    except Exception as e:
+        logger.error(f"Error in webhook: {str(e)}")
+        return "Error", 500
+
+if __name__ == "__main__":
+    flask_app.run(host="0.0.0.0", port=int(os.getenv("PORT", 10000)))
