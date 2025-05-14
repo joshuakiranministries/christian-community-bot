@@ -20,7 +20,7 @@ VERSE_REFERENCES = [
     "Proverbs 3:5", "Matthew 5:16", "Isaiah 40:31", "1 Corinthians 13:4", "Ephesians 2:8"
 ]
 
-# Sample prayers list for random selection
+# List of sample prayers for random selection
 PRAYERS = [
     "May God bless you with peace and strength today. Amen.",
     "Lord, guide us with your wisdom and love. Amen.",
@@ -66,7 +66,7 @@ async def verse(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.callback_query.message.reply_text(verse_text, parse_mode="Markdown")
 
 async def prayer(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    prayer_text = random.choice(PRAYERS)  # Sample random prayer logic
+    prayer_text = random.choice(PRAYERS)  # Select a random prayer from the list
     if update.message:
         await update.message.reply_text(prayer_text)
     elif update.callback_query:
