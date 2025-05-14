@@ -13,6 +13,7 @@ from telegram.ext import (
     ContextTypes,
     filters,
 )
+from telegram.error import RetryAfter, TimedOut
 
 # Set up logging
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
@@ -51,6 +52,16 @@ FALLBACK_VERSES = [
         "reference": "Philippians 4:13",
         "english": "I can do all things through Christ which strengtheneth me.",
         "telugu": "నన్ను బలపరిచే క్రీస్తు ద్వారా నేను సమస్తమూ చేయగలను."
+    },
+    {
+        "reference": "Romans 8:28",
+        "english": "And we know that all things work together for good to them that love God, to them who are the called according to his purpose.",
+        "telugu": "దేవుని ప్రేమించువారికి, ఆయన సంకల్పమునుబట్టి పిలువబడినవారికి, సమస్తమును మేలుకొరకు కలిసి జరుగునని మనము ఎరుగుదుము."
+    },
+    {
+        "reference": "Jeremiah 29:11",
+        "english": "For I know the thoughts that I think toward you, saith the Lord, thoughts of peace, and not of evil, to give you an expected end.",
+        "telugu": "మీ గురించి నేను తలంచిన ఆలోచనలు నాకు తెలిసినవని యెహోవా వాక్కు; అవి మీకు శాంతి కలుగునట్లు కీడుకు కాక ఒక అంతము కలుగునట్లు ఆలోచనలు."
     }
 ]
 
@@ -65,6 +76,7 @@ async def fetch_verse(translation: str, reference: str) -> dict:
     try:
         async with aiohttp.ClientSession() as session:
             async with session.get(url, headers=headers, timeout=10) as response:
+                logger.info(f"API request to {url}: Status {response.status}, Headers {response.headers}")
                 if response.status == 200:
                     if response.content_type == "application/json":
                         return await response.json()
@@ -73,11 +85,35 @@ async def fetch_verse(translation: str, reference: str) -> dict:
                         logger.error(f"Unexpected mimetype {response.content_type} from {url}. Response: {response_text[:500]}")
                         return None
                 else:
-                    logger.error(f"Failed to fetch verse from {url}: Status {response.status}")
+                    response_text = await response.text()
+                    logger.error(f"Failed to fetch verse from {url}: Status {response.status}, Response: {response_text[:500]}")
                     return None
     except Exception as e:
         logger.error(f"Error fetching verse from {url}: {str(e)}")
         return None
+
+async def send_message_with_retry(update: Update, text: str, parse_mode: str = None, max_retries: int = 3):
+    for attempt in range(max_retries):
+        try:
+            if update.message:
+                await update.message.reply_text(text, parse_mode=parse_mode)
+            elif update.callback_query:
+                await update.callback_query.message.reply_text(text, parse_mode=parse_mode)
+            else:
+                logger.error("No message or callback query found in update")
+                raise ValueError("No valid message or callback query")
+            return
+        except RetryAfter as e:
+            logger.warning(f"RetryAfter error: {e}. Waiting {e.retry_after} seconds...")
+            await asyncio.sleep(e.retry_after)
+        except TimedOut:
+            logger.warning(f"TimedOut error on attempt {attempt + 1}. Retrying...")
+            await asyncio.sleep(2 ** attempt)
+        except Exception as e:
+            logger.error(f"Error sending message (attempt {attempt + 1}): {str(e)}")
+            if attempt == max_retries - 1:
+                raise
+            await asyncio.sleep(2 ** attempt)
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     welcome_message = "Welcome to Christian Community Bot! 🙏\nChoose an option below:"
@@ -90,7 +126,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
     try:
-        await update.message.reply_text(welcome_message, reply_markup=reply_markup)
+        await send_message_with_retry(update, welcome_message, reply_markup=reply_markup)
     except Exception as e:
         logger.error(f"Error sending start message: {str(e)}")
 
@@ -125,26 +161,15 @@ async def verse(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
 
     try:
-        if update.message:
-            await update.message.reply_text(verse_text, parse_mode="Markdown")
-        elif update.callback_query:
-            await update.callback_query.message.reply_text(verse_text, parse_mode="Markdown")
-        else:
-            logger.error("No message or callback query found in update")
-            raise ValueError("No valid message or callback query")
+        await send_message_with_retry(update, verse_text, parse_mode="Markdown")
     except Exception as e:
         logger.error(f"Error sending verse message: {str(e)}")
-        raise  # Re-raise to capture in webhook logs
+        raise
 
 async def prayer(update: Update, context: ContextTypes.DEFAULT_TYPE):
     prayer_text = random.choice(PRAYERS)
     try:
-        if update.message:
-            await update.message.reply_text(prayer_text)
-        elif update.callback_query:
-            await update.callback_query.message.reply_text(prayer_text)
-        else:
-            logger.error("No message or callback query found in update")
+        await send_message_with_retry(update, prayer_text)
     except Exception as e:
         logger.error(f"Error sending prayer message: {str(e)}")
 
@@ -155,14 +180,14 @@ async def broadcast(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
         message = update.message.text.split(" ", 1)[1]
     except IndexError:
-        await update.message.reply_text("Please provide a message to broadcast. Usage: /broadcast <message>")
+        await send_message_with_retry(update, "Please provide a message to broadcast. Usage: /broadcast <message>")
         return
     for user_id in ADMIN_IDS:
         try:
             await context.bot.send_message(chat_id=user_id, text=message)
         except telegram.error.TelegramError as e:
             logger.error(f"Failed to send broadcast to {user_id}: {e}")
-    await update.message.reply_text("Broadcast sent!")
+    await send_message_with_retry(update, "Broadcast sent!")
 
 async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
@@ -174,7 +199,7 @@ async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
         elif query.data == "prayer":
             await prayer(update, context)
         elif query.data == "contact_admin":
-            await query.message.reply_text("Contact our admin: @YourAdminUsername")
+            await send_message_with_retry(update, "Contact our admin: @YourAdminUsername")
         else:
             logger.warning(f"Unknown callback data: {query.data}")
     except Exception as e:
