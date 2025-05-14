@@ -23,6 +23,10 @@ logger = logging.getLogger(__name__)
 ADMIN_IDS = [int(x) for x in os.getenv("ADMIN_IDS", "").split(",") if x]
 BIBLE_API_KEY = os.getenv("BIBLE_API_KEY", "")
 
+# Validate BIBLE_API_KEY
+if not BIBLE_API_KEY:
+    logger.error("BIBLE_API_KEY is not set in environment variables")
+
 # List of verse references for random selection
 VERSE_REFERENCES = [
     "John 3:16", "Psalm 23:1", "Romans 8:28", "Philippians 4:13", "Jeremiah 29:11",
@@ -51,7 +55,7 @@ FALLBACK_VERSES = [
     {
         "reference": "Philippians 4:13",
         "english": "I can do all things through Christ which strengtheneth me.",
-        "telugu": "నన్ను బలపరిచే క్రీస్తు ద్వారా నేను సమస్తమವు చేయగలను."
+        "telugu": "నన్ను బలపరిచే క్రీస్తు ద్వారా నేను సమస్తమవు చేయగలను."
     },
     {
         "reference": "Romans 8:28",
@@ -67,27 +71,34 @@ FALLBACK_VERSES = [
 
 # Convert verse reference to api.bible format (e.g., "John 3:16" -> "JHN.3.16")
 def format_verse_reference(reference: str) -> str:
-    book, chapter_verse = reference.rsplit(" ", 1)
-    chapter, verse = chapter_verse.split(":")
-    book_abbr = {
-        "John": "JHN",
-        "Psalm": "PSA",
-        "Romans": "ROM",
-        "Philippians": "PHP",
-        "Jeremiah": "JER",
-        "Proverbs": "PRO",
-        "Matthew": "MAT",
-        "Isaiah": "ISA",
-        "1 Corinthians": "1CO",
-        "Ephesians": "EPH"
-    }.get(book, book.upper()[:3])
-    return f"{book_abbr}.{chapter}.{verse}"
+    try:
+        book, chapter_verse = reference.rsplit(" ", 1)
+        chapter, verse = chapter_verse.split(":")
+        book_abbr = {
+            "John": "JHN",
+            "Psalm": "PSA",
+            "Romans": "ROM",
+            "Philippians": "PHP",
+            "Jeremiah": "JER",
+            "Proverbs": "PRO",
+            "Matthew": "MAT",
+            "Isaiah": "ISA",
+            "1 Corinthians": "1CO",
+            "Ephesians": "EPH"
+        }.get(book, book.upper()[:3])
+        return f"{book_abbr}.{chapter}.{verse}"
+    except Exception as e:
+        logger.error(f"Error formatting verse reference {reference}: {str(e)}")
+        return reference.replace(" ", ".").replace(":", ".")
 
 async def fetch_verse(translation: str, reference: str) -> dict:
     bible_id = {
         "kjv": "de4e12af7f28f599-01",  # KJV
         "tel-irv": "a156e704dc937475-01"  # Telugu IRV
     }.get(translation)
+    if not bible_id:
+        logger.error(f"Invalid translation: {translation}")
+        return None
     verse_id = format_verse_reference(reference)
     url = f"https://api.bible/v1/bibles/{bible_id}/verses/{verse_id}"
     headers = {
@@ -110,8 +121,14 @@ async def fetch_verse(translation: str, reference: str) -> dict:
                     response_text = await response.text()
                     logger.error(f"Failed to fetch verse from {url}: Status {response.status}, Response: {response_text[:500]}")
                     return None
+    except aiohttp.ClientError as e:
+        logger.error(f"Client error fetching verse from {url}: {str(e)}")
+        return None
+    except asyncio.TimeoutError:
+        logger.error(f"Timeout fetching verse from {url}")
+        return None
     except Exception as e:
-        logger.error(f"Error fetching verse from {url}: {str(e)}")
+        logger.error(f"Unexpected error fetching verse from {url}: {str(e)}")
         return None
 
 async def send_message_with_retry(update: Update, text: str, parse_mode: str = None, reply_markup=None, max_retries: int = 3):
@@ -128,15 +145,15 @@ async def send_message_with_retry(update: Update, text: str, parse_mode: str = N
             return
         except RetryAfter as e:
             logger.warning(f"RetryAfter error: {e}. Waiting {e.retry_after} seconds...")
-            await asyncio.sleep(e.retry_after)
+            await asyncio.sleep(e.retry_after + 1)  # Add buffer
         except TimedOut:
             logger.warning(f"TimedOut error on attempt {attempt + 1}. Retrying...")
-            await asyncio.sleep(2 ** attempt)
+            await asyncio.sleep(2 ** attempt + 1)
         except Exception as e:
             logger.error(f"Error sending message (attempt {attempt + 1}): {str(e)}")
             if attempt == max_retries - 1:
                 raise
-            await asyncio.sleep(2 ** attempt)
+            await asyncio.sleep(2 ** attempt + 1)
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     welcome_message = "Welcome to Christian Community Bot! 🙏\nChoose an option below:"
