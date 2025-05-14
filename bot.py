@@ -2,6 +2,7 @@ import os
 import telegram
 import aiohttp
 import random
+import logging
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.ext import (
     Application,
@@ -10,6 +11,10 @@ from telegram.ext import (
     ContextTypes,
     filters,
 )
+
+# Set up logging
+logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 # Assuming ADMIN_IDS is defined
 ADMIN_IDS = [int(x) for x in os.getenv("ADMIN_IDS", "").split(",") if x]
@@ -29,12 +34,17 @@ PRAYERS = [
 
 async def fetch_verse(translation: str, reference: str) -> dict:
     url = f"https://getbible.net/v2/{translation}/{reference}.json"
-    async with aiohttp.ClientSession() as session:
-        async with session.get(url) as response:
-            if response.status == 200:
-                return await response.json()
-            else:
-                return None
+    try:
+        async with aiohttp.ClientSession() as session:
+            async with session.get(url, timeout=10) as response:
+                if response.status == 200:
+                    return await response.json()
+                else:
+                    logger.error(f"Failed to fetch verse from {url}: Status {response.status}")
+                    return None
+    except Exception as e:
+        logger.error(f"Error fetching verse from {url}: {str(e)}")
+        return None
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     welcome_message = "Welcome to Christian Community Bot! 🙏\nChoose an option below:"
@@ -50,23 +60,28 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def verse(update: Update, context: ContextTypes.DEFAULT_TYPE):
     reference = random.choice(VERSE_REFERENCES)
-    english_verse = await fetch_verse("kjv", reference)
-    telugu_verse = await fetch_verse("tel-irv", reference)
-    if english_verse and telugu_verse:
-        verse_text = (
-            f"📖 *Daily Verse: {reference}*\n\n"
-            f"🇬🇧 *English (KJV)*: {english_verse['text']}\n\n"
-            f"🇮🇳 *Telugu (IRV)*: {telugu_verse['text']}"
-        )
-    else:
-        verse_text = "Sorry, could not fetch the verse. Please try again later."
+    try:
+        english_verse = await fetch_verse("kjv", reference)
+        telugu_verse = await fetch_verse("tel-irv", reference)
+        if english_verse and telugu_verse:
+            verse_text = (
+                f"📖 *Daily Verse: {reference}*\n\n"
+                f"🇬🇧 *English (KJV)*: {english_verse['text']}\n\n"
+                f"🇮🇳 *Telugu (IRV)*: {telugu_verse['text']}"
+            )
+        else:
+            verse_text = f"Sorry, could not fetch the verse for {reference}. Please try again later."
+    except Exception as e:
+        verse_text = f"Error fetching verse: {str(e)}. Please try again later."
+        logger.error(f"Error in verse function: {str(e)}")
+    
     if update.message:
         await update.message.reply_text(verse_text, parse_mode="Markdown")
     elif update.callback_query:
         await update.callback_query.message.reply_text(verse_text, parse_mode="Markdown")
 
 async def prayer(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    prayer_text = random.choice(PRAYERS)  # Select a random prayer from the list
+    prayer_text = random.choice(PRAYERS)
     if update.message:
         await update.message.reply_text(prayer_text)
     elif update.callback_query:
@@ -74,7 +89,7 @@ async def prayer(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def broadcast(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if update.message is None:
-        print("No message found in update for broadcast command")
+        logger.error("No message found in update for broadcast command")
         return
     try:
         message = update.message.text.split(" ", 1)[1]
@@ -85,11 +100,12 @@ async def broadcast(update: Update, context: ContextTypes.DEFAULT_TYPE):
         try:
             await context.bot.send_message(chat_id=user_id, text=message)
         except telegram.error.TelegramError as e:
-            print(f"Failed to send broadcast to {user_id}: {e}")
+            logger.error(f"Failed to send broadcast to {user_id}: {e}")
     await update.message.reply_text("Broadcast sent!")
 
 async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
+    logger.info(f"Received callback query with data: {query.data}")
     await query.answer()
     if query.data == "verse":
         await verse(update, context)
@@ -97,6 +113,8 @@ async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await prayer(update, context)
     elif query.data == "contact_admin":
         await query.message.reply_text("Contact our admin: @YourAdminUsername")
+    else:
+        logger.warning(f"Unknown callback data: {query.data}")
 
 async def main():
     app = Application.builder().token(os.getenv("BOT_TOKEN")).build()
