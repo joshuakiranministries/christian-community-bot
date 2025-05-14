@@ -36,18 +36,24 @@ def add_user(user_id):
     conn.close()
 
 # Start command
+from telegram import InlineKeyboardButton, InlineKeyboardMarkup
+
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    user_id = update.effective_user.id
-    add_user(user_id)
-    keyboard = [[InlineKeyboardButton("Support Us", url=AFFILIATE_LINK)]]
+    # Define the welcome message
+    welcome_message = "Welcome to Christian Community Bot! 🙏\nChoose an option below:"
+
+    # Create inline keyboard buttons
+    keyboard = [
+        [
+            InlineKeyboardButton("Daily Verse 📖", callback_data="verse"),
+            InlineKeyboardButton("Prayer 🙏", callback_data="prayer"),
+        ],
+        [InlineKeyboardButton("Contact Admin ✉️", callback_data="contact_admin")],
+    ]
     reply_markup = InlineKeyboardMarkup(keyboard)
-    keyboard = [[InlineKeyboardButton("Our Website", url=WEBSITE_LINK)]]
-    reply_markup = InlineKeyboardMarkup(keyboard)
-    await update.message.reply_text(
-        "Welcome to our Telugu Christian community! 🙏 May the Lord bless you abundantly. Let’s grow together in faith.\nమన తెలుగు క్రైస్తవ సమాజానికి స్వాగతం! 🙏 ప్రభువు మీరు అమితంగా ఆశీర్వదించాలని కోరుకుంటున్నాము. మనం విశ్వాసంలో కలిసి ఎదగుదాం.\nUse /verse or /prayer to start.",
-        reply_markup=reply_markup,
-        parse_mode=ParseMode.HTML
-    )
+
+    # Send welcome message with buttons
+    await update.message.reply_text(welcome_message, reply_markup=reply_markup)
 
 # Verse command
 async def verse(update: Update, context: ContextTypes.DEFAULT_TYPE):
