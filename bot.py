@@ -195,33 +195,35 @@ async def verse(update: Update, context: ContextTypes.DEFAULT_TYPE):
     reference = random.choice(VERSE_REFERENCES)
     verse_text = ""
     try:
-        async with asyncio.timeout(20):
+        # Use asyncio.wait_for for Python 3.9 compatibility instead of asyncio.timeout
+        async def fetch_verses():
             if not BIBLE_API_KEY:
                 fallback_verse = random.choice(FALLBACK_VERSES)
                 logger.warning(f"BIBLE_API_KEY missing, using fallback verse {fallback_verse['reference']}")
-                verse_text = (
+                return (
                     f"📖 *Daily Verse: {fallback_verse['reference']}* (API unavailable, using fallback)\n\n"
                     f"🇬🇧 *English (KJV)*: {fallback_verse['english']}\n\n"
                     f"🇮🇳 *Telugu (IRV)*: {fallback_verse['telugu']}"
                 )
+            english_verse = await fetch_verse("kjv", reference)
+            await asyncio.sleep(0.5)
+            telugu_verse = await fetch_verse("tel-irv", reference)
+            if english_verse and telugu_verse:
+                return (
+                    f"📖 *Daily Verse: {reference}*\n\n"
+                    f"🇬🇧 *English (KJV)*: {english_verse['text']}\n\n"
+                    f"🇮🇳 *Telugu (IRV)*: {telugu_verse['text']}"
+                )
             else:
-                english_verse = await fetch_verse("kjv", reference)
-                await asyncio.sleep(0.5)
-                telugu_verse = await fetch_verse("tel-irv", reference)
-                if english_verse and telugu_verse:
-                    verse_text = (
-                        f"📖 *Daily Verse: {reference}*\n\n"
-                        f"🇬🇧 *English (KJV)*: {english_verse['text']}\n\n"
-                        f"🇮🇳 *Telugu (IRV)*: {telugu_verse['text']}"
-                    )
-                else:
-                    fallback_verse = random.choice(FALLBACK_VERSES)
-                    logger.warning(f"API failed for {reference}, using fallback verse {fallback_verse['reference']}")
-                    verse_text = (
-                        f"📖 *Daily Verse: {fallback_verse['reference']}* (API unavailable, using fallback)\n\n"
-                        f"🇬🇧 *English (KJV)*: {fallback_verse['english']}\n\n"
-                        f"🇮🇳 *Telugu (IRV)*: {fallback_verse['telugu']}"
-                    )
+                fallback_verse = random.choice(FALLBACK_VERSES)
+                logger.warning(f"API failed for {reference}, using fallback verse {fallback_verse['reference']}")
+                return (
+                    f"📖 *Daily Verse: {fallback_verse['reference']}* (API unavailable, using fallback)\n\n"
+                    f"🇬🇧 *English (KJV)*: {fallback_verse['english']}\n\n"
+                    f"🇮🇳 *Telugu (IRV)*: {fallback_verse['telugu']}"
+                )
+
+        verse_text = await asyncio.wait_for(fetch_verses(), timeout=20)
     except asyncio.TimeoutError:
         fallback_verse = random.choice(FALLBACK_VERSES)
         logger.error(f"Verse function timed out for {reference}, using fallback verse {fallback_verse['reference']}")
